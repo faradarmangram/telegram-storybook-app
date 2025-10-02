@@ -113,8 +113,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // A. رکورد صوتی (فعلاً هشدار - منطق واقعی در گام بعدی)
     const recordBtn = document.getElementById('record-btn');
-    recordBtn.addEventListener('click', () => {
-        alert("قابلیت رکورد صدا در گام بعدی فعال می‌شود. (نیاز به HTTPS دارد.)");
+    const playback = document.getElementById('playback');
+    
+    let mediaRecorder; // شیء اصلی ضبط کننده
+    let audioChunks = []; // آرایه برای ذخیره تکه‌های صوتی
+    let isRecording = false;
+
+    /**
+     * درخواست دسترسی به میکروفون و شروع یا توقف ضبط را مدیریت می‌کند.
+     */
+    recordBtn.addEventListener('click', async () => {
+        if (isRecording) {
+            // --- توقف رکورد ---
+            mediaRecorder.stop();
+            isRecording = false;
+            recordBtn.textContent = 'شروع رکورد';
+            recordBtn.style.backgroundColor = 'var(--tg-theme-button-color)'; // برگرداندن به رنگ اصلی
+            console.log("ضبط متوقف شد.");
+            return;
+        }
+
+        // --- شروع رکورد ---
+        try {
+            // ۱. درخواست دسترسی به میکروفون
+            // این کار فقط روی HTTPS کار می‌کند و از کاربر اجازه می‌خواهد.
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            // ۲. ساخت شیء MediaRecorder
+            mediaRecorder = new MediaRecorder(stream);
+            
+            // ۳. پاک کردن داده‌های قبلی
+            audioChunks = [];
+            
+            // ۴. رویداد ذخیره‌سازی داده
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+
+            // ۵. رویداد توقف (زمانی که ضبط متوقف شد)
+            mediaRecorder.onstop = () => {
+                // الف. ترکیب تکه‌های صوتی در یک Blob (فایل صوتی)
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' }); 
+                
+                // ب. ساخت URL قابل پخش محلی
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                // ج. تنظیم تگ Audio برای پخش
+                playback.src = audioUrl;
+                playback.style.display = 'block';
+                
+                // قطع اتصال میکروفون برای صرفه‌جویی در منابع
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            // ۶. شروع ضبط
+            mediaRecorder.start();
+            isRecording = true;
+            recordBtn.textContent = 'در حال رکورد... (برای توقف کلیک کنید)';
+            recordBtn.style.backgroundColor = 'red'; // تغییر رنگ برای وضعیت ضبط
+            playback.style.display = 'none'; // مخفی کردن پخش کننده قبلی
+            console.log("ضبط شروع شد.");
+
+        } catch (err) {
+            // مدیریت خطا (عدم اجازه، یا عدم اجرای در HTTPS)
+            console.error('خطا در دسترسی به میکروفون:', err);
+            alert('خطا: اجازه دسترسی به میکروفون داده نشد یا باید در یک محیط امن (HTTPS) اجرا شود.');
+        }
     });
     
     // B. نظردهی 
