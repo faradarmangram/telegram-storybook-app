@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استوری‌بوک تعاملی تلگرام</title>
+    <title>استوری‌بوک تعاملی TON تلگرام</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,38 +17,38 @@
         <div id="story-book" class="story-book">
             
             <div class="page cover" data-page="1">
-                <h1>عنوان استوری‌بوک من</h1>
+                <h1>عنوان استوری‌بوک تعاملی</h1>
                 <p>توسط کمک‌کدنویس</p>
                 <button class="turn-page-btn" data-direction="next">شروع خواندن »</button>
             </div>
             
             <div class="page content" data-page="2">
-                <h2>فصل ۱</h2>
-                <p>در یک شب پرستاره، کدنویس کوچولو مشغول ساختن یک مینی‌اپ بود...</p>
-                <img src="image1.jpg" alt="تصویر صفحه ۱">
+                <h2>فصل اول: تولد مینی‌اپ</h2>
+                <p>در یک شب پرستاره، کدنویس کوچولو شروع به نوشتن خط اول کد کرد. او می‌خواست داستانی بسازد که هم زیبا باشد و هم از قدرت بلاکچین استفاده کند...</p>
+                <img src="image1.jpg" alt="تصویر صفحه ۱" style="max-width: 100%; height: auto; margin-top: 15px;">
                 <button class="turn-page-btn" data-direction="prev">« صفحه قبل</button>
                 <button class="turn-page-btn" data-direction="next">صفحه بعد »</button>
             </div>
             
             <div class="page content" data-page="3">
-                <h2>تعاملات</h2>
+                <h2>تعاملات و پاداش‌ها</h2>
                 
                 <div class="interaction-block">
-                    <h3>🎁 پاداش و حمایت</h3>
+                    <h3>🎁 پاداش و حمایت بلاکچینی</h3>
                     <button id="connect-wallet">اتصال به کیف پول (TON Connect)</button>
-                    <button id="send-reward" disabled>ارسال سکه (۵ TON)</button>
+                    <button id="send-reward" disabled>ارسال پاداش (۰.۵ TON)</button>
                     <p>⭐ واکنش‌ها: <span id="reactions-count">0</span> | ❤️ امتیازها: <span id="stars-count">0</span></p>
                 </div>
 
                 <div class="interaction-block">
-                    <h3>🎤 صدای شما</h3>
+                    <h3>🎤 صدای شما (روایت‌گری)</h3>
                     <button id="record-btn">شروع/توقف رکورد</button>
-                    <audio id="playback" controls></audio>
+                    <audio id="playback" controls style="display: none; width: 100%; margin-top: 10px;"></audio>
                 </div>
 
                 <div class="interaction-block">
                     <h3>💬 نظر شما</h3>
-                    <textarea id="comment-field" placeholder="نظر خود را بنویسید..."></textarea>
+                    <textarea id="comment-field" placeholder="نظر، سؤال یا پیشنهاد خود را بنویسید..."></textarea>
                     <button id="submit-comment">ارسال نظر</button>
                 </div>
                 
@@ -59,6 +59,8 @@
     </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    
+    <script src="https://unpkg.com/@tonconnect/sdk@2.0.0/dist/tonconnect-sdk.js"></script>
     
     <script src="script.js"></script>
 </body>
