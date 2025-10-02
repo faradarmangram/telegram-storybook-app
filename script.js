@@ -1,51 +1,177 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     
+    // عناصر اصلی DOM
+    const libraryView = document.getElementById('library-view');
+    const bookView = document.getElementById('book-view');
+    const backToLibraryBtn = document.getElementById('back-to-library');
+    const book = document.getElementById('story-book');
+    const pages = Array.from(document.querySelectorAll('.page'));
+    const music = document.getElementById('background-music');
+    const toggleMusicBtn = document.getElementById('toggle-music');
+    const recordBtn = document.getElementById('record-btn');
+    const playback = document.getElementById('playback');
+    const connectWalletBtn = document.getElementById('connect-wallet');
+    const sendRewardBtn = document.getElementById('send-reward');
+    
+    let currentPageIndex = 0;
+    let isRecording = false;
+    let mediaRecorder;
+    let audioChunks = [];
+    let isPlaying = false;
+
+
     // -------------------------------------------------------------------
-    // --- ۰. منطق ادغام با تلگرام (جدید در گام ۲) ---
+    // --- ۰. منطق ادغام با تلگرام و TON Connect ---
     // -------------------------------------------------------------------
+    let connector;
+    
     if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
-        
-        // اطمینان از آماده بودن مینی‌اپ
         tg.ready(); 
-        
-        // تنظیم رنگ پس‌زمینه اصلی بر اساس تم تلگرام
         document.body.style.backgroundColor = tg.themeParams.bg_color;
         
         console.log("Mini App آماده است. تم تلگرام اعمال شد.");
 
-        // فعال‌سازی دکمه اصلی (Main Button) تلگرام برای ارسال پاداش
+        // تنظیم دکمه اصلی (Main Button) تلگرام برای ارسال پاداش
         tg.MainButton.setText("💸 ارسال پاداش TON");
         tg.MainButton.onClick(() => {
-            // در فاز بعدی منطق TON Connect اینجا قرار می‌گیرد
-            alert("آماده برای ارسال پاداش! نیاز به ادغام TON Connect.");
+            // فراخوانی مستقیم تابع ارسال پاداش
+            if (connector && connector.connected) {
+                handleSendReward();
+            } else {
+                alert("لطفاً ابتدا به کیف پول متصل شوید.");
+            }
         });
-        tg.MainButton.show(); // نمایش دکمه
-
+        // دکمه اصلی در ابتدا مخفی است و با اتصال کیف پول یا ورود به کتاب فعال می‌شود
+        tg.MainButton.hide(); 
     } else {
         console.log("در محیط تلگرام اجرا نمی‌شود. اجرای عادی.");
     }
-    // -------------------------------------------------------------------
-
-
-    const book = document.getElementById('story-book');
-    const pages = Array.from(document.querySelectorAll('.page'));
-    let currentPageIndex = 0;
-
-    // --- ۱. منطق ورق زدن ---
     
-    // در ابتدا، فقط صفحه اول (index 0) را به عنوان صفحه جاری تنظیم کن.
-    pages.forEach((page, index) => {
-        page.classList.remove('current', 'prev-turned');
-        if (index === 0) {
-            page.classList.add('current');
+    // --- تابع‌های TON Connect ---
+    
+    const manifestUrl = 'https://YOUR_HTTPS_DOMAIN/tonconnect-manifest.json'; // آدرس واقعی خود را جایگزین کنید!
+
+    if (window.TonConnect) {
+        connector = new window.TonConnect.TonConnect({
+            manifestUrl: manifestUrl,
+            storage: new window.TonConnect.TonConnect.IStorage(),
+            connector: {
+                platform: 'telegram-mini-app' 
+            }
+        });
+
+        connector.onStatusChange(wallet => {
+            if (wallet) {
+                connectWalletBtn.textContent = `متصل به: ${wallet.account.address.slice(0, 6)}...`;
+                sendRewardBtn.disabled = false;
+                if (window.Telegram && window.Telegram.WebApp) window.Telegram.WebApp.MainButton.show();
+            } else {
+                connectWalletBtn.textContent = 'اتصال به کیف پول (TON Connect)';
+                sendRewardBtn.disabled = true;
+                if (window.Telegram && window.Telegram.WebApp) window.Telegram.WebApp.MainButton.hide();
+            }
+        });
+    }
+
+    connectWalletBtn.addEventListener('click', async () => {
+        if (!connector) return;
+        if (connector.connected) {
+            await connector.disconnect();
+        } else {
+            // منطق اتصال کیف پول در مینی‌اپ
+             try {
+                const universalLink = await connector.connect({ isDapp: true, universalLink: true });
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.openTelegramLink(universalLink);
+                } else {
+                    alert("لطفاً از مینی‌اپ تلگرام برای اتصال استفاده کنید.");
+                }
+            } catch (error) {
+                console.error("خطا در ایجاد لینک اتصال:", error);
+                alert("خطا در اتصال. لطفاً دوباره تلاش کنید.");
+            }
         }
     });
 
-    /**
-     * صفحه کتاب را ورق می‌زند (جلو یا عقب).
-     * @param {string} direction 'next' یا 'prev'
-     */
+    async function handleSendReward() {
+        if (!connector || !connector.connected) return;
+        
+        const recipientAddress = 'EQCM3B-P4xMhR2w9D0pQW2B0Xq-E_b2Q582Y73qB9Qj8k-y1'; // آدرس مقصد را جایگزین کنید!
+        const amount = '500000000'; // 0.5 TON (در نانو TON)
+        
+        const transaction = {
+            validUntil: Math.floor(Date.now() / 1000) + 60,
+            messages: [{ address: recipientAddress, amount: amount }],
+        };
+        
+        try {
+            const result = await connector.sendTransaction(transaction);
+            alert(`پاداش ارسال شد! Hash: ${result.boc.slice(0, 10)}...`);
+        } catch (error) {
+            console.error('Transaction Failed:', error);
+            alert("تراکنش ناموفق بود. مطمئن شوید که موجودی کافی دارید.");
+        }
+    }
+    sendRewardBtn.addEventListener('click', handleSendReward);
+
+
+    // -------------------------------------------------------------------
+    // --- ۱. منطق کتابخانه و ناوبری ---
+    // -------------------------------------------------------------------
+    
+    function showLibrary() {
+        libraryView.style.display = 'block';
+        bookView.style.display = 'none';
+        backToLibraryBtn.style.display = 'none';
+        // در کتابخانه، دکمه اصلی تلگرام را مخفی می‌کنیم
+        if (window.Telegram && window.Telegram.WebApp) window.Telegram.WebApp.MainButton.hide(); 
+    }
+    
+    function showBook(bookId) {
+        // فعلا فقط یک کتاب داریم، پس فقط نمایش را جابجا می‌کنیم
+        libraryView.style.display = 'none';
+        bookView.style.display = 'flex'; // یا block
+        backToLibraryBtn.style.display = 'inline-block';
+        
+        // اگر متصل باشیم، دکمه اصلی تلگرام را نشان می‌دهیم
+        if (connector && connector.connected && window.Telegram && window.Telegram.WebApp) {
+            window.Telegram.WebApp.MainButton.show();
+        }
+
+        // اطمینان از اینکه کتاب از صفحه اول شروع می‌شود
+        resetBook();
+    }
+    
+    document.querySelectorAll('.book-cover').forEach(cover => {
+        cover.addEventListener('click', (event) => {
+            const bookId = event.currentTarget.getAttribute('data-book-id');
+            showBook(bookId);
+        });
+    });
+
+    backToLibraryBtn.addEventListener('click', showLibrary);
+    
+    // شروع برنامه با نمایش کتابخانه
+    showLibrary(); 
+
+    // -------------------------------------------------------------------
+    // --- ۲. منطق ورق زدن و ریست ---
+    // -------------------------------------------------------------------
+
+    function resetBook() {
+         // بازنشانی کتاب به صفحه اول
+        currentPageIndex = 0;
+        pages.forEach((page, index) => {
+            page.classList.remove('current');
+            page.style.transform = index === 0 ? 'rotateY(0deg)' : 'rotateY(180deg)';
+            page.style.zIndex = index === 0 ? '10' : '9';
+            if (index === 0) {
+                page.classList.add('current');
+            }
+        });
+    }
+
     function turnPage(direction) {
         const totalPages = pages.length;
         let newIndex = currentPageIndex;
@@ -58,20 +184,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (newIndex !== currentPageIndex) {
             const oldPage = pages[currentPageIndex];
-            const newPage = pages[newIndex];
-
-            // منطق افکت ورق زدن:
             oldPage.classList.remove('current');
             
-            // تنظیم transform برای ایجاد افکت بصری ورق خوردن
-            if (newIndex > currentPageIndex) {
-                 oldPage.style.transform = 'rotateY(-180deg)';
-                 oldPage.style.zIndex = '9';
-            } else { 
-                 oldPage.style.transform = 'rotateY(180deg)';
-                 oldPage.style.zIndex = '9';
-            }
+            // اعمال transform برای افکت ورق زدن
+            oldPage.style.transform = newIndex > currentPageIndex ? 'rotateY(-180deg)' : 'rotateY(180deg)';
+            oldPage.style.zIndex = '9';
             
+            const newPage = pages[newIndex];
             newPage.classList.add('current');
             newPage.style.transform = 'rotateY(0deg)';
             newPage.style.zIndex = '10';
@@ -80,19 +199,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // اضافه کردن شنونده کلیک به تمام دکمه‌های ورق زدن
     document.querySelectorAll('.turn-page-btn').forEach(button => {
         button.addEventListener('click', (event) => {
-            const direction = event.currentTarget.getAttribute('data-direction');
-            turnPage(direction);
+            turnPage(event.currentTarget.getAttribute('data-direction'));
         });
     });
 
-
-    // --- ۲. کنترل موسیقی متن ---
-    const music = document.getElementById('background-music');
-    const toggleMusicBtn = document.getElementById('toggle-music');
-    let isPlaying = false;
+    // -------------------------------------------------------------------
+    // --- ۳. منطق کنترل موسیقی ---
+    // -------------------------------------------------------------------
 
     toggleMusicBtn.addEventListener('click', () => {
         if (isPlaying) {
@@ -101,104 +216,81 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             music.play().catch(error => {
                 console.error("خطا در پخش موسیقی:", error);
-                alert("لطفاً پخش خودکار صدا را در تنظیمات مرورگر/تلگرام فعال کنید.");
+                alert("لطفاً پخش خودکار صدا را فعال کنید.");
             });
             toggleMusicBtn.textContent = 'توقف موسیقی';
         }
         isPlaying = !isPlaying;
     });
     
-    
-    // --- ۳. شبیه‌سازی تعاملات (رکورد، نظردهی، پاداش) ---
+    // -------------------------------------------------------------------
+    // --- ۴. منطق رکورد صوتی ---
+    // -------------------------------------------------------------------
 
-    // A. رکورد صوتی (فعلاً هشدار - منطق واقعی در گام بعدی)
-    const recordBtn = document.getElementById('record-btn');
-    const playback = document.getElementById('playback');
-    
-    let mediaRecorder; // شیء اصلی ضبط کننده
-    let audioChunks = []; // آرایه برای ذخیره تکه‌های صوتی
-    let isRecording = false;
-
-    /**
-     * درخواست دسترسی به میکروفون و شروع یا توقف ضبط را مدیریت می‌کند.
-     */
     recordBtn.addEventListener('click', async () => {
         if (isRecording) {
-            // --- توقف رکورد ---
             mediaRecorder.stop();
             isRecording = false;
             recordBtn.textContent = 'شروع رکورد';
-            recordBtn.style.backgroundColor = 'var(--tg-theme-button-color)'; // برگرداندن به رنگ اصلی
-            console.log("ضبط متوقف شد.");
+            recordBtn.style.backgroundColor = 'var(--tg-theme-button-color)';
             return;
         }
 
-        // --- شروع رکورد ---
         try {
-            // ۱. درخواست دسترسی به میکروفون
-            // این کار فقط روی HTTPS کار می‌کند و از کاربر اجازه می‌خواهد.
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            
-            // ۲. ساخت شیء MediaRecorder
             mediaRecorder = new MediaRecorder(stream);
-            
-            // ۳. پاک کردن داده‌های قبلی
             audioChunks = [];
             
-            // ۴. رویداد ذخیره‌سازی داده
             mediaRecorder.ondataavailable = (event) => {
                 audioChunks.push(event.data);
             };
 
-            // ۵. رویداد توقف (زمانی که ضبط متوقف شد)
             mediaRecorder.onstop = () => {
-                // الف. ترکیب تکه‌های صوتی در یک Blob (فایل صوتی)
                 const audioBlob = new Blob(audioChunks, { type: 'audio/wav' }); 
-                
-                // ب. ساخت URL قابل پخش محلی
                 const audioUrl = URL.createObjectURL(audioBlob);
-                
-                // ج. تنظیم تگ Audio برای پخش
                 playback.src = audioUrl;
                 playback.style.display = 'block';
-                
-                // قطع اتصال میکروفون برای صرفه‌جویی در منابع
                 stream.getTracks().forEach(track => track.stop());
             };
 
-            // ۶. شروع ضبط
             mediaRecorder.start();
             isRecording = true;
             recordBtn.textContent = 'در حال رکورد... (برای توقف کلیک کنید)';
-            recordBtn.style.backgroundColor = 'red'; // تغییر رنگ برای وضعیت ضبط
-            playback.style.display = 'none'; // مخفی کردن پخش کننده قبلی
-            console.log("ضبط شروع شد.");
+            recordBtn.style.backgroundColor = 'red'; 
+            playback.style.display = 'none';
 
         } catch (err) {
-            // مدیریت خطا (عدم اجازه، یا عدم اجرای در HTTPS)
             console.error('خطا در دسترسی به میکروفون:', err);
-            alert('خطا: اجازه دسترسی به میکروفون داده نشد یا باید در یک محیط امن (HTTPS) اجرا شود.');
+            alert('خطا: دسترسی به میکروفون داده نشد یا باید در HTTPS اجرا شود.');
         }
     });
-    
-    // B. نظردهی 
+
+    // -------------------------------------------------------------------
+    // --- ۵. منطق نظردهی (شبیه‌سازی) ---
+    // -------------------------------------------------------------------
+
     const submitCommentBtn = document.getElementById('submit-comment');
     submitCommentBtn.addEventListener('click', () => {
         const comment = document.getElementById('comment-field').value;
         if (comment.trim()) {
-            alert(`نظر شما ثبت شد: "${comment}". (در نسخه نهایی به سرور ارسال می‌شود.)`);
-            document.getElementById('comment-field').value = ''; // پاک کردن فیلد
+            console.log(`نظر ثبت شد: ${comment}`);
+            alert(`نظر شما ثبت شد: "${comment}". (نیاز به سرور برای ذخیره‌سازی.)`);
+            document.getElementById('comment-field').value = '';
         } else {
             alert("لطفاً نظری بنویسید.");
         }
     });
+    
+    // -------------------------------------------------------------------
+    // --- ۶. منطق ری‌اکشن‌ها و ستاره‌ها (شبیه‌سازی) ---
+    // -------------------------------------------------------------------
 
-    // C. بلاکچین/پاداش 
-    document.getElementById('connect-wallet').addEventListener('click', () => {
-        alert("اتصال کیف پول TON در گام بعدی با استفاده از کتابخانه TON Connect SDK انجام خواهد شد.");
-    });
-    document.getElementById('send-reward').addEventListener('click', () => {
-        alert("ارسال پاداش TON پس از اتصال کیف پول فعال خواهد شد.");
-    });
+    // اگر می‌خواهید ری‌اکشن‌ها کار کنند، می‌توانید منطق شبیه‌سازی را اضافه کنید:
+    // const reactionsCount = document.getElementById('reactions-count');
+    // let currentReactions = 0;
+    // document.getElementById('reaction-button').addEventListener('click', () => {
+    //     currentReactions++;
+    //     reactionsCount.textContent = currentReactions;
+    // });
     
 });
