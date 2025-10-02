@@ -50,7 +50,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // --- تابع‌های TON Connect ---
     
-    const manifestUrl = 'https://YOUR_HTTPS_DOMAIN/tonconnect-manifest.json'; // آدرس واقعی خود را جایگزین کنید!
+    const manifestUrl = 'const manifestUrl = 'https://YOUR_HTTPS_DOMAIN/tonconnect-manifest.json'; // آدرس واقعی خود را جایگزین کنید!
 
     if (window.TonConnect) {
         connector = new window.TonConnect.TonConnect({
@@ -294,3 +294,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     // });
     
 });
+
