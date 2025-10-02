@@ -1,0 +1,108 @@
+/* تنظیمات پایه */
+body {
+    font-family: Tahoma, sans-serif;
+    background-color: #f0f4f8;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    margin: 0;
+    direction: rtl; /* برای فارسی */
+}
+
+/* کنترل موسیقی */
+.music-controls {
+    margin-bottom: 20px;
+}
+
+/* ظرف کتاب */
+.book-container {
+    perspective: 1500px; 
+    width: 600px; 
+    height: 800px; 
+}
+
+/* خود کتاب */
+.story-book {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+/* هر صفحه */
+.page {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    padding: 30px;
+    box-sizing: border-box;
+    /* این رنگ‌ها توسط جاوااسکریپت یا متغیرهای تلگرام تنظیم می‌شوند */
+    background-color: var(--tg-theme-bg-color, #fff); 
+    color: var(--tg-theme-text-color, #333); 
+    border: 1px solid var(--tg-theme-hint-color, #ccc);
+    box-shadow: 5px 5px 20px rgba(0,0,0,0.1);
+    backface-visibility: hidden; 
+    text-align: right;
+    overflow-y: auto;
+    transition: transform 0.8s ease-in-out; 
+}
+
+/* پنهان کردن صفحات بعدی به صورت پیش‌فرض */
+.page:not([data-page="1"]) {
+    transform: rotateY(180deg);
+}
+
+/* صفحه فعلی */
+.page.current {
+    transform: rotateY(0deg);
+    z-index: 10;
+}
+
+/* صفحه قبلی که ورق خورده */
+.page.prev-turned {
+    transform: rotateY(-180deg);
+    z-index: 9;
+}
+
+/* استایل‌دهی به دکمه‌ها و محتوا */
+h1, h2 { 
+    color: var(--tg-theme-link-color, #007bff); /* رنگ عناوین */
+}
+
+.cover { 
+    text-align: center; 
+    background-color: var(--tg-theme-secondary-bg-color, #e0f7fa); /* رنگ روشن‌تر برای جلد */
+}
+
+.cover h1 { 
+    margin-top: 200px; 
+}
+
+.turn-page-btn {
+    padding: 10px 15px;
+    margin: 10px;
+    cursor: pointer;
+    background-color: var(--tg-theme-button-color, #28a745); /* رنگ دکمه تلگرام */
+    color: var(--tg-theme-button-text-color, white); /* رنگ متن دکمه تلگرام */
+    border: none;
+    border-radius: 5px;
+}
+
+/* بلاک‌های تعاملی */
+.interaction-block {
+    border: 1px dashed var(--tg-theme-link-color, #007bff);
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+}
+textarea {
+    width: 100%;
+    height: 80px;
+    margin-top: 10px;
+    padding: 8px;
+    box-sizing: border-box;
+    border-radius: 5px;
+    border: 1px solid var(--tg-theme-hint-color, #ccc);
+}
