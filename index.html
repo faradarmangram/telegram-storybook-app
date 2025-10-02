@@ -9,22 +9,46 @@
 <body>
 
     <audio id="background-music" src="music.mp3" loop></audio>
-    <div class="music-controls">
+    <div class="music-controls" id="global-music-controls">
         <button id="toggle-music">پخش/توقف موسیقی</button>
+        <button id="back-to-library" style="display: none;">« بازگشت به کتابخانه</button>
     </div>
     
-    <div class="book-container">
+    <div id="library-view" class="library-container">
+        <h2>📚 کتابخانه استوری‌بوک‌ها</h2>
+        <div class="book-grid">
+            
+            <div class="book-cover" data-book-id="story-1">
+                <div class="cover-image">
+                    <img src="cover-image-1.jpg" alt="کاور داستان ۱">
+                </div>
+                <h3>ماجرای کدنویس کوچک</h3>
+                <p>داستان اول ما درباره ماجراجویی در دنیای TON و تلگرام.</p>
+            </div>
+
+            <div class="book-cover" data-book-id="story-2">
+                <div class="cover-image">
+                    <img src="cover-image-2.jpg" alt="کاور داستان ۲">
+                </div>
+                <h3>افسانه‌های بلاکچین</h3>
+                <p>داستانی جذاب از ری‌اکشن‌ها و پاداش‌ها.</p>
+            </div>
+
+            </div>
+    </div>
+
+    <div id="book-view" class="book-container" style="display: none;">
         <div id="story-book" class="story-book">
             
             <div class="page cover" data-page="1">
-                <h1>عنوان استوری‌بوک تعاملی</h1>
+                <h1>ماجرای کدنویس کوچک</h1>
                 <p>توسط کمک‌کدنویس</p>
                 <button class="turn-page-btn" data-direction="next">شروع خواندن »</button>
             </div>
             
             <div class="page content" data-page="2">
-                <h2>فصل اول: تولد مینی‌اپ</h2>
-                <p>در یک شب پرستاره، کدنویس کوچولو شروع به نوشتن خط اول کد کرد. او می‌خواست داستانی بسازد که هم زیبا باشد و هم از قدرت بلاکچین استفاده کند...</p>
+                <h2>فصل اول</h2>
+                <p>در یک شب پرستاره، کدنویس کوچولو مشغول ساختن یک مینی‌اپ بود...</p>
                 <img src="image1.jpg" alt="تصویر صفحه ۱" style="max-width: 100%; height: auto; margin-top: 15px;">
                 <button class="turn-page-btn" data-direction="prev">« صفحه قبل</button>
                 <button class="turn-page-btn" data-direction="next">صفحه بعد »</button>
@@ -59,9 +83,7 @@
     </div>
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
     <script src="https://unpkg.com/@tonconnect/sdk@2.0.0/dist/tonconnect-sdk.js"></script>
-    
     <script src="script.js"></script>
 </body>
 </html>
